@@ -6,6 +6,7 @@ import io
 from pathlib import Path
 
 import pandas as pd
+import requests
 
 from quant.cache import cache_dir
 
@@ -34,8 +35,13 @@ def sp500(refresh: bool = False) -> list[str]:
     if cache_path.exists() and not refresh:
         return pd.read_parquet(cache_path)["ticker"].tolist()
 
+    # pandas' built-in fetcher uses urllib's default User-Agent which
+    # Wikipedia 403s. Pull through requests with a real UA, then parse.
     url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
-    tables = pd.read_html(url)
+    headers = {"User-Agent": "quant/0.0 (personal research)"}
+    response = requests.get(url, headers=headers, timeout=30)
+    response.raise_for_status()
+    tables = pd.read_html(io.StringIO(response.text))
     df = tables[0][["Symbol"]].rename(columns={"Symbol": "ticker"})
     df["ticker"] = df["ticker"].str.replace(".", "-", regex=False)  # BRK.B → BRK-B
     df.to_parquet(cache_path, index=False)

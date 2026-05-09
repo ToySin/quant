@@ -68,6 +68,28 @@ def load(tickers: list[str], start: str, end: str | None = None,
     return PriceFrame(close=close_df, volume=volume_df)
 
 
+def filter_by_first_bar(prices: PriceFrame, *, listed_before: str,
+                        slack_days: int = 14) -> PriceFrame:
+    """Keep tickers whose first available bar is on or shortly after
+    `listed_before` — i.e., the ticker was already trading when the
+    backtest window opened.
+
+    Why this shape: `data.load(start=...)` slices the cached history,
+    so tickers that existed long before the start show up with
+    first_valid_index near the panel start. Late listers (e.g., META
+    listed in 2012 with start=2010) show up with first_valid_index
+    much later. `slack_days` lets us tolerate weekends, holidays, or
+    a few missing days at the very start.
+    """
+    cutoff = pd.Timestamp(listed_before) + pd.Timedelta(days=slack_days)
+    first_bars = prices.close.apply(lambda col: col.first_valid_index())
+    keep = first_bars[first_bars.notna() & (first_bars <= cutoff)].index.tolist()
+    return PriceFrame(
+        close=prices.close[keep],
+        volume=prices.volume[keep],
+    )
+
+
 def _load_one(ticker: str, refresh: bool) -> pd.DataFrame:
     cache_path = cache_dir() / f"ohlcv_{ticker}.parquet"
     if cache_path.exists() and not refresh:
