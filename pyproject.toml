@@ -7,7 +7,27 @@ name = "quant"
 version = "0.0.1"
 description = "Personal quantitative investment program"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "yfinance>=0.2.40",
+    "pyarrow>=15.0",
+    "lxml>=5.0",
+    "html5lib>=1.1",
+    "beautifulsoup4>=4.12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["quant"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::FutureWarning",
+]
