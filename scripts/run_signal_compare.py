@@ -24,7 +24,13 @@ import pandas as pd
 from quant import data, report, universe
 from quant.backtest import run as run_backtest
 from quant.positions import equal_weight_when_long
-from quant.signals import ma_cross_signal, macd_signal, rsi_signal
+from quant.signals import (
+    ma_cross_signal,
+    macd_signal,
+    price_above_ma_with_macd,
+    rsi_signal,
+    trend_filtered_macd,
+)
 
 
 def main() -> None:
@@ -43,9 +49,11 @@ def main() -> None:
     rets = prices.returns()
 
     strategies = {
-        "MA cross 50/200":   ma_cross_signal(prices.close, fast=50, slow=200),
-        "RSI 14 (30/70)":    rsi_signal(prices.close, window=14, lower=30, upper=70),
-        "MACD 12/26/9":      macd_signal(prices.close),
+        "MA cross 50/200":      ma_cross_signal(prices.close, fast=50, slow=200),
+        "RSI 14 (30/70)":       rsi_signal(prices.close, window=14, lower=30, upper=70),
+        "MACD 12/26/9":         macd_signal(prices.close),
+        "Trend-filter + MACD":  trend_filtered_macd(prices.close),
+        "Price>MA200 + MACD":   price_above_ma_with_macd(prices.close),
     }
 
     rows = []
