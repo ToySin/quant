@@ -27,6 +27,7 @@ import pandas as pd
 
 from quant import data, universe
 from quant.factors import momentum_12_1
+from quant.filters import drop_extreme_momentum
 from scripts.check_alpaca import _load_workspace_env
 
 
@@ -36,11 +37,16 @@ def main() -> int:
                         default="sp500")
     parser.add_argument("--top-pct", type=float, default=0.10,
                         help="Fraction of universe to hold (default 10%%)")
-    parser.add_argument("--listed-before", default="2010-01-01")
+    parser.add_argument("--listed-before", default=None,
+                        help="History filter — leave off for live screening "
+                             "(filter is for backtest hygiene, not current screening)")
     parser.add_argument("--execute", action="store_true",
                         help="Actually submit orders. Without this, dry run.")
     parser.add_argument("--min-trade", type=float, default=10.0,
                         help="Skip rebalances smaller than this dollar amount")
+    parser.add_argument("--max-momentum", type=float, default=4.0,
+                        help="Drop momentum scores above this (filters spinoffs / "
+                             "data errors). Default 4.0 = +400%%.")
     args = parser.parse_args()
 
     _load_workspace_env()
@@ -64,7 +70,9 @@ def main() -> int:
         prices = data.filter_by_first_bar(prices, listed_before=args.listed_before)
 
     scores = momentum_12_1(prices.close)
-    today_scores = scores.iloc[-1].dropna()
+    today_scores = scores.iloc[-1]
+    today_scores = drop_extreme_momentum(today_scores, max_score=args.max_momentum)
+    today_scores = today_scores.dropna()
     if today_scores.empty:
         print("✗ no momentum scores computable today (warmup missing?)", file=sys.stderr)
         return 1
