@@ -192,7 +192,10 @@ def _label_for(lookback: int) -> str:
 
 
 def _plot_dir() -> Path:
-    p = cache_dir().parent / "plots"
+    """Plots live under outputs/plots/ (NOT data/plots/) so they get
+    committed to the repo and become embeddable via raw GitHub URLs.
+    """
+    p = Path(__file__).resolve().parent.parent / "outputs" / "plots"
     p.mkdir(parents=True, exist_ok=True)
     return p
 
