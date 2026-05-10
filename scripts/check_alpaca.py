@@ -12,12 +12,18 @@ from pathlib import Path
 
 
 def _load_workspace_env() -> None:
-    """Load ALPACA_* keys from the assistant-hub quant workspace .env
-    if present. The quant repo's own .env is also checked as a fallback.
+    """Load credentials from .env files.
+
+    Search order:
+      1. The quant repo's own .env (typical for 24/7 deploy machines)
+      2. The assisthub-ws-quant workspace .env (typical for local dev)
+
+    Variables already set in the OS environment are never overwritten —
+    that lets you override at the cron level if needed.
     """
     candidates = [
-        Path.home() / "repositories" / "assisthub-ws-quant" / ".env",
         Path(__file__).resolve().parent.parent / ".env",
+        Path.home() / "repositories" / "assisthub-ws-quant" / ".env",
     ]
     for env_path in candidates:
         if not env_path.exists():

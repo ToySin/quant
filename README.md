@@ -45,6 +45,11 @@ python -m scripts.screen_today --universe sp500 --top-n 15
 python -m scripts.check_alpaca                                # connection sanity check
 python -m scripts.paper_rebalance                             # dry run — print plan only
 python -m scripts.paper_rebalance --execute                   # send orders
+
+# Monitoring + automation (24/7 machine — see deploy/README.md)
+python -m scripts.daily_monitor --no-post                     # local snapshot
+python -m scripts.daily_monitor                               # snapshot → Discord
+python -m scripts.auto_monthly_rebalance --dry-run --force    # test auto-rebalance
 ```
 
 ## Layout
@@ -70,6 +75,9 @@ quant/
   report.py            CAGR / Sharpe / Sortino / MDD / Calmar / hit rate
   score.py             multi-factor blend (cross-sectional z-score)
   broker.py            Alpaca paper-trading wrapper (paper-default, double-gated for live)
+  notify.py            Discord webhook client
+  state.py             Persistent JSON state for daily/monthly automation
+  filters.py           Sanity filters (e.g. drop extreme-momentum data errors)
 
 scripts/
   run_momentum.py            single-factor demo
@@ -81,6 +89,8 @@ scripts/
   screen_today.py            top-N today's tickers per factor
   check_alpaca.py            paper account snapshot
   paper_rebalance.py         momentum 12-1 monthly rebalance via paper trading
+  daily_monitor.py           equity / PnL snapshot → Discord
+  auto_monthly_rebalance.py  cron-friendly auto-rebalance with state-tracked idempotency
 
 tests/                       62 pytest cases, all on synthetic data (no network)
 data/                        gitignored — parquet cache, intermediate outputs
